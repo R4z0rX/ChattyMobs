@@ -59,7 +59,7 @@ public class ActionHandler {
         prompts = createPrompt(entity, player);
         ItemStack heldItem = player.getMainHandStack();
         if (heldItem.getCount() > 0)
-            prompts = "You are holding a " + heldItem.getName().getString() + " in your hand. " + prompts;
+            prompts = "Estás sosteniendo un objeto cuyo nombre en inglés es " + heldItem.getName().getString() + " en tu mano. " + prompts;
         showWaitMessage(entityName);
         getResponse(player);
     }
@@ -89,11 +89,11 @@ public class ActionHandler {
 
     public static void replyToEntity(String message, PlayerEntity player) {
         if (entityId == 0) return;
-        prompts += (player.getUuid() == initiator) ? "You say: \"" : ("Your friend " + player.getName().getString() + " says: \"");
-        prompts += message.replace("\"", "'") + "\"\n The " + entityName + " says: \"";
+        prompts += (player.getUuid() == initiator) ? "Tú dices: \"" : ("Tu amigo " + player.getName().getString() + " dice: \"");
+        prompts += message.replace("\"", "'") + "\"\n La entidad de nombre en inglés " + entityName + " dice: \"";
         getResponse(player);
     }
-
+    
     private static boolean isEntityHurt(LivingEntity entity) {
         return entity.getHealth() * 1.2 < entity.getAttributeValue(EntityAttributes.GENERIC_MAX_HEALTH);
     }
@@ -103,18 +103,18 @@ public class ActionHandler {
         entityName = "Villager";
         String villageName = villager.getVillagerData().getType().toString().toLowerCase(Locale.ROOT) + " village";
         int rep = villager.getReputation(player);
-        if (rep < -5) villageName = villageName + " that sees you as horrible";
-        if (rep > 5) villageName = villageName + " that sees you as reputable";
+        if (rep < -5) villageName = villageName + " que te ve como horrible";
+        if (rep > 5) villageName = villageName + " que te ve como confiable";
         if (villager.isBaby()) {
             entityName = "Villager Kid";
-            return String.format("You see a kid in a %s. The kid shouts: \"", villageName);
+            return String.format("Ves a un niño en un pueblo de tipo %s. El niño grita: \"", villageName);
         }
-        String profession = StringUtils.capitalize(villager.getVillagerData().getProfession().toString().toLowerCase(Locale.ROOT).replace("none", "freelancer"));
+        String profession = villager.getVillagerData().getProfession().toString().toLowerCase(Locale.ROOT).replace("none", "freelancer");
         entityName = profession;
-        if (villager.getVillagerData().getLevel() >= 3) profession = "skilled " + profession;
-        if (isHurt) profession = "hurt " + profession;
-        return String.format("You meet a %s in a %s. The villager says to you: \"", profession, villageName);
-    }
+        if (villager.getVillagerData().getLevel() >= 3) profession = "habilidoso " + profession;
+        if (isHurt) profession = "herido " + profession;
+        return String.format("Te encuentras con un aldeano de profesión (en inglés) %s en un pueblo de tipo %s. El aldeano te dice: \"", profession, villageName);
+    }    
 
     public static String createPromptLiving(LivingEntity entity) {
         boolean isHurt = isEntityHurt(entity);
@@ -122,21 +122,21 @@ public class ActionHandler {
         String name = baseName;
         Text customName = entity.getCustomName();
         if (customName != null)
-            name = baseName + " called " + customName.getString();
+            name = baseName + " llamado " + customName.getString();
         entityName = baseName;
-        if (isHurt) name = "hurt " + name;
-        return String.format("You meet a talking %s in the %s. The %s says to you: \"", name, getBiome(entity), baseName);
-    }
+        if (isHurt) name = "herida " + name;
+        return String.format("Te encuentras con una entidad cuyo nombre en inglés es %s en un bioma de tipo %s. La entidad %s te dice: \"", name, getBiome(entity), baseName);
+    }    
 
     public static String createPrompt(Entity entity, PlayerEntity player) {
         if (entity instanceof VillagerEntity villager) return createPromptVillager(villager, player);
         if (entity instanceof LivingEntity entityLiving) return createPromptLiving(entityLiving);
         entityName = entity.getName().getString();
-        return "You see a " + entityName + ". The " + entityName + " says: \"";
-    }
+        return "Ves a una entidad cuyo nombre en inglés es " + entityName + ". La entidad " + entityName + " dice: \"";
+    }    
 
     public static void handlePunch(Entity entity, Entity player) {
         if (entity.getId() != entityId) return;
-        prompts += ((player.getUuid() == initiator) ? "You punch" : (player.getName().getString() + " punches")) + " the " + entityName + ".\n";
-    }
+        prompts += ((player.getUuid() == initiator) ? "Golpeas" : (player.getName().getString() + " golpea")) + " a la entidad de nombre en inglés " + entityName + ".\n";
+    }    
 }
