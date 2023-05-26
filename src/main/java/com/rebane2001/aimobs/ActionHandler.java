@@ -116,7 +116,7 @@ public class ActionHandler {
         Text customName = villager.getCustomName();
         if (customName != null)
             profession = profession + " called " + customName.getString();
-        return String.format("You meet a %s in a %s. The villager says to you: \"", profession, villageName);
+        return String.format("You meet a %s in a %s. It talks to you and says directly to you: \"", profession, villageName);
     }
 
     public static String createPromptLiving(LivingEntity entity) {
