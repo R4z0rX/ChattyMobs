@@ -113,6 +113,9 @@ public class ActionHandler {
         entityName = profession;
         if (villager.getVillagerData().getLevel() >= 3) profession = "skilled " + profession;
         if (isHurt) profession = "hurt " + profession;
+        Text customName = villager.getCustomName();
+        if (customName != null)
+            profession = profession + " called " + customName.getString();
         return String.format("You meet a %s in a %s. The villager says to you: \"", profession, villageName);
     }
 
