@@ -16,16 +16,14 @@ import net.minecraft.text.Text;
 import net.minecraft.util.Formatting;
 import net.minecraft.util.Util;
 import net.minecraft.registry.RegistryKey;
+// import net.minecraft.world.EntityView;
 import net.minecraft.world.biome.Biome;
 import org.apache.commons.lang3.StringUtils;
-import org.apache.commons.lang3.tuple.Pair;
 
-import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Optional;
 import java.util.UUID;
-
 
 public class ActionHandler {
     public static String prompts = "";
@@ -33,7 +31,6 @@ public class ActionHandler {
     public static int entityId = 0;
     public static UUID initiator = null;
     public static long lastRequest = 0;
-    public static HashMap<Integer, HashMap<UUID, Pair<String, Pair<String, String>>>> entityMemory = new HashMap<>();
 
     // The waitMessage is the thing that goes '<Name> ...' before an actual response is received
     private static ChatHudLine.Visible waitMessage;
@@ -77,15 +74,9 @@ public class ActionHandler {
         lastRequest = System.currentTimeMillis();
         Thread t = new Thread(() -> {
             try {
-                String prompts = entityMemory.get(entityId).get(player.getUuid()).getLeft();
                 String response = RequestHandler.getAIResponse(prompts);
                 player.sendMessage(Text.of("<" + entityName + "> " + response));
                 prompts += response + "\"\n";
-                HashMap<UUID, Pair<String, Pair<String, String>>> entityMemoryMap = entityMemory.getOrDefault(entityId, new HashMap<>());
-                Pair<String, Pair<String, String>> memory = entityMemoryMap.get(player.getUuid());
-                if (memory != null) {
-                    entityMemoryMap.put(player.getUuid(), Pair.of(prompts, Pair.of(memory.getRight().getLeft(), response)));
-                }
             } catch (Exception e) {
                 player.sendMessage(Text.of("[AIMobs] Error getting response"));
                 e.printStackTrace();
@@ -95,16 +86,13 @@ public class ActionHandler {
         });
         t.start();
     }
-    
+
     public static void replyToEntity(String message, PlayerEntity player) {
         if (entityId == 0) return;
-        String prompts = entityMemory.computeIfAbsent(entityId, k -> new HashMap<>()).getOrDefault(player.getUuid(), Pair.of("", Pair.of("", ""))).getLeft();
         prompts += (player.getUuid() == initiator) ? "You say: \"" : ("Your friend " + player.getName().getString() + " says: \"");
         prompts += message.replace("\"", "'") + "\"\n The " + entityName + " says: \"";
-        entityMemory.get(entityId).put(player.getUuid(), Pair.of(prompts, Pair.of(message, "")));
         getResponse(player);
     }
-    
 
     private static boolean isEntityHurt(LivingEntity entity) {
         return entity.getHealth() * 1.2 < entity.getAttributeValue(EntityAttributes.GENERIC_MAX_HEALTH);
@@ -128,17 +116,10 @@ public class ActionHandler {
         Text customName = villager.getCustomName();
         if (customName != null)
             profession = profession + " called " + customName.getString();
-        
-        Pair<String, Pair<String, String>> memory = entityMemory.getOrDefault(villager.getId(), new HashMap<>()).get(player.getUuid());
-        if (memory != null) {
-            return String.format("You meet a %s in a %s. It remembers you and says: \"%s\"", profession, villageName, memory.getRight());
-        } else {
-            return String.format("You meet a %s in a %s. It talks to you and says directly to you: \"", profession, villageName);
-        }
-
+        return String.format("You meet a %s in a %s. It talks to you and says directly to you: \"", profession, villageName);
     }
 
-    public static String createPromptLiving(LivingEntity entity, PlayerEntity player) {
+    public static String createPromptLiving(LivingEntity entity) {
         boolean isHurt = isEntityHurt(entity);
         String baseName = entity.getName().getString();
         String name = baseName;
@@ -147,17 +128,12 @@ public class ActionHandler {
             name = baseName + " called " + customName.getString();
         entityName = baseName;
         if (isHurt) name = "hurt " + name;
-        Pair<String, Pair<String, String>> memory = entityMemory.getOrDefault(entity.getId(), new HashMap<>()).get(player.getUuid());
-        if (memory != null) {
-            return String.format("You meet a talking %s in the %s. It remembers you and says: \"%s\"", name, getBiome(entity), memory.getRight());
-        } else {
-            return String.format("You meet a talking %s in the %s. The %s says to you: \"", name, getBiome(entity), baseName);
-        }
+        return String.format("You meet a talking %s in the %s. The %s says to you: \"", name, getBiome(entity), baseName);
     }
 
     public static String createPrompt(Entity entity, PlayerEntity player) {
         if (entity instanceof VillagerEntity villager) return createPromptVillager(villager, player);
-        if (entity instanceof LivingEntity entityLiving) return createPromptLiving(entityLiving, player);
+        if (entity instanceof LivingEntity entityLiving) return createPromptLiving(entityLiving);
         entityName = entity.getName().getString();
         return "You see a " + entityName + ". The " + entityName + " says: \"";
     }
