@@ -123,7 +123,8 @@ public class ActionHandler {
 
     public static String createPromptLiving(LivingEntity entity) {
         boolean isHurt = isEntityHurt(entity);
-        entityBaseName = entity.getName().getString(); // set base name
+        // set base name for the entity: cow, pig, sheep, etc.
+        entityBaseName = entity.getType().getTranslationKey().replace("entity.minecraft.", "").replace("_", " ");
         entityDisplayName = entityBaseName; // initially set display name to be the base name
         Text customName = entity.getCustomName();
         if (customName != null)
