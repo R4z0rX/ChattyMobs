@@ -128,7 +128,7 @@ public class ActionHandler {
         entityDisplayName = entityBaseName; // initially set display name to be the base name
         Text customName = entity.getCustomName();
         if (customName != null)
-            entityDisplayName = entityBaseName + " called " + customName.getString();  // modify display name
+            entityDisplayName = StringUtils.capitalize(entityBaseName) + " called " + customName.getString();  // modify display name
         if (isHurt) entityDisplayName = "hurt " + entityDisplayName; // modify display name
         return String.format("You meet a talking %s in the %s. The %s says to you: \"", entityDisplayName, getBiome(entity), entityBaseName);  // use base name here to keep the entity type in the conversation
     }
