@@ -73,10 +73,9 @@ public class ActionHandler {
         lastRequest = System.currentTimeMillis();
         Thread t = new Thread(() -> {
             try {
-                // Define maxTokens and isSummary
-                Integer maxTokens = 4096; // Maximum tokens can vary based on your requirements.
-                boolean isSummary = false; // Set it according to your needs.
-                String response = RequestHandler.getAIResponse(prompts, maxTokens, isSummary);
+                player.sendMessage(Text.of("[AIMobs] Getting response..."));
+                String response = RequestHandler.getAIResponse(prompts);
+                // Capitalize the first letter of the entity name
                 player.sendMessage(Text.of("<" + entityDisplayName + "> " + response));
                 prompts += response + "\"\n";
             } catch (Exception e) {
@@ -128,10 +127,10 @@ public class ActionHandler {
         boolean isHurt = isEntityHurt(entity);
         // set base name for the entity: cow, pig, sheep, etc.
         entityBaseName = entity.getType().getTranslationKey().replace("entity.minecraft.", "").replace("_", " ");
-        entityDisplayName = entityBaseName; // initially set display name to be the base name
+        entityDisplayName = StringUtils.capitalize(entityBaseName);
         Text customName = entity.getCustomName();
         if (customName != null)
-            entityDisplayName = StringUtils.capitalize(entityBaseName) + " called " + customName.getString();  // modify display name
+            entityDisplayName = entityDisplayName + " called " + customName.getString();  // modify display name
         if (isHurt) entityDisplayName = "hurt " + entityDisplayName; // modify display name
         return String.format("You meet a talking %s in the %s. The %s says to you: \"", entityDisplayName, getBiome(entity), entityBaseName);  // use base name here to keep the entity type in the conversation
     }

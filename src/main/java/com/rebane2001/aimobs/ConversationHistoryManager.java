@@ -101,12 +101,9 @@ public class ConversationHistoryManager {
     public static String getAIResponse(UUID entityUUID) {
         EntityConversation conversation = conversationMap.get(entityUUID);
         if (conversation != null) {
-            // Define maxTokens and isSummary
-            Integer maxTokens = TOKEN_LIMIT; // Maximum tokens can vary based on your requirements.
-            boolean isSummary = false; // Set it according to your needs.
             try {
-                // Use RequestHandler to get the actual response from the OpenAI API.
-                String response = RequestHandler.getAIResponse(conversation.prompt, maxTokens, isSummary);
+                // Use RequestHandler to get the actual response from the OpenAI API. Add previous conversation history to the prompt.
+                String response = RequestHandler.getAIResponse(conversation.prompt + "\n" + String.join("\n", conversation.conversationHistory));
                 // Get player from conversation
                 PlayerEntity player = conversation.getPlayer();
                 addAIMessageToHistory(response, player, entityUUID);

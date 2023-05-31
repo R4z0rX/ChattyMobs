@@ -13,17 +13,16 @@ import java.io.IOException;
 
 public class RequestHandler {
     private static class OpenAIRequest {
-        String model;
+        String model = "text-davinci-003";
         String stop = "\"";
-        String prompt;
-        float temperature;
-        Integer max_tokens;
+        String prompt = "";
+        float temperature = 0.6f;
+        int max_tokens = 512;
 
-        OpenAIRequest(String prompt, String model, float temperature, Integer max_tokens) {
+        OpenAIRequest(String prompt, String model, float temperature) {
             this.prompt = prompt;
             this.model = model;
             this.temperature = temperature;
-            this.max_tokens = max_tokens;
         }
     }
 
@@ -34,25 +33,15 @@ public class RequestHandler {
         Choice[] choices;
     }
 
-    public static String getAIResponse(String prompt, Integer maxTokens, boolean isSummary) throws IOException {
-        if (prompt.length() > 4096) 
-            prompt = ConversationHistoryManager.truncateToTokenLimit(prompt,4096);
-
+    public static String getAIResponse(String prompt) throws IOException {
+        if (prompt.length() > 4096) prompt = prompt.substring(prompt.length() - 4096);
         AIMobsMod.LOGGER.info("Prompt: " + prompt);
 
-        String endpoint = "https://api.openai.com/v1/completions";
-        if (isSummary) 
-            endpoint = "https://api.openai.com/v1/completions";
-
-        if (maxTokens == null) {
-            maxTokens = 4096; // Set to the maximum allowed by your model
-        }
-
-        OpenAIRequest openAIRequest = new OpenAIRequest(prompt, AIMobsConfig.config.model, AIMobsConfig.config.temperature, maxTokens);
+        OpenAIRequest openAIRequest = new OpenAIRequest(prompt, AIMobsConfig.config.model, AIMobsConfig.config.temperature);
         String data = new Gson().toJson(openAIRequest);
 
         try (CloseableHttpClient httpClient = HttpClientBuilder.create().build()) {
-            HttpPost request = new HttpPost(endpoint);
+            HttpPost request = new HttpPost("https://api.openai.com/v1/completions");
             StringEntity params = new StringEntity(data, "UTF-8");
             request.addHeader("Content-Type", "application/json");
             request.addHeader("Authorization", "Bearer " + AIMobsConfig.config.apiKey);
@@ -60,14 +49,7 @@ public class RequestHandler {
             HttpResponse response = httpClient.execute(request);
             HttpEntity entity = response.getEntity();
             String responseString = EntityUtils.toString(entity, "UTF-8");
-            OpenAIResponse res = new Gson().fromJson(responseString, OpenAIResponse.class);
-
-            // Combine all choices
-            StringBuilder combinedChoices = new StringBuilder();
-            for (OpenAIResponse.Choice choice : res.choices) {
-                combinedChoices.append(choice.text.replace("\n", " "));
-            }
-            return combinedChoices.toString();
+            return new Gson().fromJson(responseString, OpenAIResponse.class).choices[0].text.replace("\n", " ");
         }
     }
 }
