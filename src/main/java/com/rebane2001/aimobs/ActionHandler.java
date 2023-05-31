@@ -73,8 +73,11 @@ public class ActionHandler {
         lastRequest = System.currentTimeMillis();
         Thread t = new Thread(() -> {
             try {
-                String response = RequestHandler.getAIResponse(prompts);
-                player.sendMessage(Text.of("<" + entityDisplayName + "> " + response)); // use display name here
+                // Define maxTokens and isSummary
+                Integer maxTokens = 4096; // Maximum tokens can vary based on your requirements.
+                boolean isSummary = false; // Set it according to your needs.
+                String response = RequestHandler.getAIResponse(prompts, maxTokens, isSummary);
+                player.sendMessage(Text.of("<" + entityDisplayName + "> " + response));
                 prompts += response + "\"\n";
             } catch (Exception e) {
                 player.sendMessage(Text.of("[AIMobs] Error getting response"));
@@ -84,12 +87,12 @@ public class ActionHandler {
             }
         });
         t.start();
-    }
+    }    
 
     public static void replyToEntity(String message, PlayerEntity player) {
         if (entityId == 0) return;
         prompts += (player.getUuid() == initiator) ? "You say: \"" : ("Your friend " + player.getName().getString() + " says: \"");
-        prompts += message.replace("\"", "'") + "\"\n The " + entityDisplayName + " says: \""; // use display name here
+        prompts += message.replace("\"", "'") + "\"\n The " + entityDisplayName + " says: \"";
         getResponse(player);
     }
 
@@ -138,7 +141,7 @@ public class ActionHandler {
         if (entity instanceof LivingEntity entityLiving) return createPromptLiving(entityLiving);
         entityBaseName = entity.getName().getString();
         entityDisplayName = entityBaseName; // initially set display name to be the base name
-        return "You see a " + entityDisplayName + ". The " + entityBaseName + " says: \"";
+        return "You see a " + entityDisplayName + ". The " + entityBaseName + " says to you: \"";
     }
 
     public static void handlePunch(Entity entity, Entity player) {

@@ -17,7 +17,7 @@ public class AIMobsMod implements ClientModInitializer {
 		AttackEntityCallback.EVENT.register((player, world, hand, entity, hitResult) -> {
 			if (!AIMobsConfig.config.enabled) return ActionResult.PASS;
 			if (!player.isSneaking()) {
-				if (entity.getId() == ActionHandler.entityId)
+				if (entity.getUuid().equals(ActionHandler.initiator))
 					ActionHandler.handlePunch(entity, player);
 				return ActionResult.PASS;
 			}
