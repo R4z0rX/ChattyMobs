@@ -73,7 +73,7 @@ public class ActionHandler {
         lastRequest = System.currentTimeMillis();
         Thread t = new Thread(() -> {
             try {
-                player.sendMessage(Text.of("[AIMobs] Getting response..."));
+                //player.sendMessage(Text.of("[AIMobs] Getting response..."));
                 String response = RequestHandler.getAIResponse(prompts);
                 // Capitalize the first letter of the entity name
                 player.sendMessage(Text.of("<" + entityDisplayName + "> " + response));
