@@ -18,7 +18,17 @@ public class AIMobsMod implements ClientModInitializer {
 			if (!AIMobsConfig.config.enabled) return ActionResult.PASS;
 			if (!player.isSneaking()) {
 				if (entity.getUuid().equals(ActionHandler.initiator))
-					ActionHandler.handlePunch(entity, player);
+
+					// Check if entity is already dead because of punch, if not, punch. If yes, handleDeath:
+					if (entity.isAlive()){
+						// Check if punch
+						ActionHandler.handlePunch(entity, player);
+					} else {
+						// Handle death
+						ActionHandler.handleDeath(entity);
+					}
+						
+					
 				return ActionResult.PASS;
 			}
 			ActionHandler.startConversation(entity, player);

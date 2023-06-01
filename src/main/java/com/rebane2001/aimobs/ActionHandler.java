@@ -1,6 +1,5 @@
 package com.rebane2001.aimobs;
 
-import com.google.common.collect.EvictingQueue;
 import com.rebane2001.aimobs.mixin.ChatHudAccessor;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.gui.hud.ChatHudLine;
@@ -21,17 +20,20 @@ import net.minecraft.world.biome.Biome;
 import org.apache.commons.lang3.StringUtils;
 
 import java.util.*;
+import java.io.*;
+
 
 public class ActionHandler {
-    private static final int CONVERSATION_HISTORY_SIZE = 5;
-    private static Map<UUID, EntityConversation> conversationMap = new HashMap<>();
     public static String prompts = "";
     public static String entityName = "";
-    public static String entityBaseName = "";
-    public static String entityDisplayName = "";
+    public static String entityBaseName = ""; // added new variable for base name
+    public static String entityDisplayName = ""; // added new variable for display name
     public static int entityId = 0;
     public static UUID initiator = null;
     public static long lastRequest = 0;
+
+    // Create a new HashMap to store the conversation history for each entity
+    private static Map<UUID, String> conversationHistory = new HashMap<>();
 
     private static ChatHudLine.Visible waitMessage;
     private static List<ChatHudLine.Visible> getChatHudMessages() {
@@ -56,19 +58,16 @@ public class ActionHandler {
     public static void startConversation(Entity entity, PlayerEntity player) {
         entityId = entity.getId();
         initiator = player.getUuid();
-        EntityConversation conversation;
-        if (!conversationMap.containsKey(entity.getUuid())) {
-            conversation = new EntityConversation(entity, player);
-            conversationMap.put(entity.getUuid(), conversation);
+        // Check the HashMap for existing conversation history
+        if (conversationHistory.containsKey(entity.getUuid())) {
+            prompts = conversationHistory.get(entity.getUuid());
         } else {
-            conversation = conversationMap.get(entity.getUuid());
-            conversation.updatePrompt(entity, player);
+            prompts = createPrompt(entity, player);
         }
-        prompts = conversation.getPrompt();
         ItemStack heldItem = player.getMainHandStack();
         if (heldItem.getCount() > 0)
             prompts = "You are holding a " + heldItem.getName().getString() + " in your hand. " + prompts;
-        showWaitMessage(conversation.getEntityDisplayName());
+        showWaitMessage(entityDisplayName); // use display name here
         getResponse(player);
     }
 
@@ -81,10 +80,11 @@ public class ActionHandler {
         lastRequest = System.currentTimeMillis();
         Thread t = new Thread(() -> {
             try {
-                EntityConversation conversation = conversationMap.get(initiator);
-                String response = RequestHandler.getAIResponse(conversation.getPrompt() + "\n" + String.join("\n", conversation.getConversationHistory()));
-                player.sendMessage(Text.of("<" + conversation.getEntityDisplayName() + "> " + response));
-                conversation.addAIMessage(response, player);
+                String response = RequestHandler.getAIResponse(prompts);
+                player.sendMessage(Text.of("<" + entityDisplayName + "> " + response)); // use display name here
+                prompts += response + "\"\n";
+                // Append both the player's message and the AI's response to the conversation history
+                conversationHistory.put(player.getUuid(), prompts);
             } catch (Exception e) {
                 player.sendMessage(Text.of("[AIMobs] Error getting response"));
                 e.printStackTrace();
@@ -93,12 +93,17 @@ public class ActionHandler {
             }
         });
         t.start();
-    }
+    } 
 
     public static void replyToEntity(String message, PlayerEntity player) {
         if (entityId == 0) return;
-        EntityConversation conversation = conversationMap.get(initiator);
-        conversation.addPlayerMessage(message, player);
+        prompts += (player.getUuid() == initiator) ? "You say: \"" : ("Your friend " + player.getName().getString() + " says: \"");
+        prompts += message.replace("\"", "'") + "\"\n The " + entityDisplayName + " says: \""; // use display name here
+        // Check the length of the conversation history
+        if (prompts.length() > 4096) {
+            // If it exceeds the maximum length, remove the oldest messages until it fits
+            prompts = prompts.substring(prompts.length() - 4096);
+        }
         getResponse(player);
     }
 
@@ -134,12 +139,12 @@ public class ActionHandler {
         boolean isHurt = isEntityHurt(entity);
         // set base name for the entity: cow, pig, sheep, etc.
         entityBaseName = entity.getType().getTranslationKey().replace("entity.minecraft.", "").replace("_", " ");
-        entityDisplayName = entityBaseName;
-        // initially set display name to be the base name
+        entityDisplayName = entityBaseName; // initially set display name to be the base name
         Text customName = entity.getCustomName();
         if (customName != null)
             entityDisplayName = StringUtils.capitalize(entityBaseName) + " called " + customName.getString();  // modify display name
-        if (isHurt) entityDisplayName = "hurt " + entityDisplayName; // modify display name
+        if (isHurt) entityDisplayName = "hurt " + entityDisplayName;
+        // modify display name
         return String.format("You meet a talking %s in the %s. The %s says to you: \"", entityDisplayName, getBiome(entity), entityBaseName);  // use base name here to keep the entity type in the conversation
     }
     
@@ -153,55 +158,65 @@ public class ActionHandler {
 
     public static void handlePunch(Entity entity, Entity player) {
         if (entity.getId() != entityId) return;
-        EntityConversation conversation = conversationMap.get(initiator);
-        conversation.addPlayerMessage("Suddenly, " + player.getName().getString() + " punches the " + entityDisplayName + ".", (PlayerEntity) player);
+        prompts += "Suddenly, " + player.getName().getString() + " punches the " + entityDisplayName + ". The " + entityBaseName + " screams out in pain: \"";
         getResponse((PlayerEntity) player);
     }
 
-    private static class EntityConversation {
-        private final EvictingQueue<String> conversationHistory;
-        private String baseName;
-        private String displayName;
-        private String prompt;
-        private final PlayerEntity player;
+    public static void handleDeath(Entity entity) {
+        if (entity.getId() != entityId) return;
+        prompts += "The " + entityDisplayName + " dies. You feel sad. The " + entityBaseName + " says: \"";
+        getResponse((PlayerEntity) entity);
+    }
 
-        public EntityConversation(Entity entity, PlayerEntity player) {
-            this.conversationHistory = EvictingQueue.create(CONVERSATION_HISTORY_SIZE);
-            this.baseName = entity.getName().getString();
-            this.displayName = this.baseName;
-            this.player = player;
-            updatePrompt(entity, player);
-        }
+    // New method for summarizing the conversation history
+    public static String summarizeConversation(String conversation) {
+        // Prepare the prompt for the OpenAI API
+        String prompt = conversation + " tl;dr:";
 
-        public PlayerEntity getPlayer() {
-            return this.player;
-        }
+        // Initialize an empty string for the summary
+        String summary = "";
+        try {
+            // Send a request to the OpenAI API
+            String response = RequestHandler.getAIResponse(prompt);
 
-        public void updatePrompt(Entity entity, PlayerEntity player) {
-            // Update the prompt based on the entity and player
-            this.prompt = "Hello " + player.getName().getString() + ". I am " + entity.getName().getString();
-        }
-        
-        public void addPlayerMessage(String message, PlayerEntity player) {
-            // Add the player's message to the conversation history
-            conversationHistory.add(player.getName().getString() + ": " + message);
-        }
-        
-        public String getEntityDisplayName() {
-            return this.displayName;
+            // Extract the summary from the response
+            summary = response.substring(response.indexOf("tl;dr:") + 6).trim();
+        } catch (IOException e) {
+            // Handle the exception
+            System.err.println("An error occurred while trying to summarize the conversation: " + e.getMessage());
         }
 
-        public void addAIMessage(String message, PlayerEntity player) {
-            // Add the AI's message to the conversation history
-            conversationHistory.add(this.displayName + ": " + message);
-        }
+        return summary;
+    }
 
-        public String getPrompt() {
-            return this.prompt;
-        }
 
-        public List<String> getConversationHistory() {
-            return new ArrayList<>(this.conversationHistory);
+
+    // New method for saving the conversation history
+    public static void saveConversationHistory(UUID entityUuid, String conversation) {
+        // This is a very basic implementation and should be replaced with proper file I/O operations
+        try {
+            FileWriter writer = new FileWriter(entityUuid.toString() + ".txt");
+            writer.write(conversation);
+            writer.close();
+        } catch (IOException e) {
+            e.printStackTrace();
         }
+    }
+
+    // New method for loading the conversation history
+    public static String loadConversationHistory(UUID entityUuid) {
+        // This is a very basic implementation and should be replaced with proper file I/O operations
+        String conversation = "";
+        try {
+            FileReader reader = new FileReader(entityUuid.toString() + ".txt");
+            int character;
+            while ((character = reader.read()) != -1) {
+                conversation += (char) character;
+            }
+            reader.close();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        return conversation;
     }
 }
