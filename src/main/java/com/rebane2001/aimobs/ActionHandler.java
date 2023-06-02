@@ -62,14 +62,12 @@ public class ActionHandler {
     public static void startConversation(Entity entity, PlayerEntity player) {
         entityId = entity.getId();
         initiator = player.getUuid();
-        // Check if conversation history exists for the entity
-        if (conversationHistory.containsKey(entity.getUuid())) {
-            // Load conversation history into prompts
-            prompts = String.join("\n", conversationHistory.get(entity.getUuid()));
-        } else {
-            // Initialize prompts as empty string
-            prompts = "";
+        // Initialize conversation history for the entity if it doesn't exist
+        if (!conversationHistory.containsKey(entity.getUuid())) {
+            conversationHistory.put(entity.getUuid(), new ArrayList<>());
         }
+        // Load conversation history into prompts
+        prompts = String.join("\n", conversationHistory.get(entity.getUuid()));
         prompts = createPrompt(entity, player);
         ItemStack heldItem = player.getMainHandStack();
         if (heldItem.getCount() > 0)
@@ -77,6 +75,7 @@ public class ActionHandler {
         showWaitMessage(entityDisplayName); // use display name here
         getResponse(player);
     }
+    
 
     public static void getResponse(PlayerEntity player) {
         if (lastRequest + 1500L > System.currentTimeMillis()) return;
