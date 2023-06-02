@@ -23,6 +23,11 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Optional;
 import java.util.UUID;
+import java.util.HashMap;
+import java.util.ArrayList;
+import java.util.Arrays;
+
+import java.io.IOException;
 
 public class ActionHandler {
     public static String prompts = "";
@@ -32,6 +37,7 @@ public class ActionHandler {
     public static int entityId = 0;
     public static UUID initiator = null;
     public static long lastRequest = 0;
+    public static HashMap<UUID, List<String>> conversationHistory = new HashMap<>();
 
     private static ChatHudLine.Visible waitMessage;
     private static List<ChatHudLine.Visible> getChatHudMessages() {
@@ -56,6 +62,14 @@ public class ActionHandler {
     public static void startConversation(Entity entity, PlayerEntity player) {
         entityId = entity.getId();
         initiator = player.getUuid();
+        // Check if conversation history exists for the entity
+        if (conversationHistory.containsKey(entity.getUuid())) {
+            // Load conversation history into prompts
+            prompts = String.join("\n", conversationHistory.get(entity.getUuid()));
+        } else {
+            // Initialize prompts as empty string
+            prompts = "";
+        }
         prompts = createPrompt(entity, player);
         ItemStack heldItem = player.getMainHandStack();
         if (heldItem.getCount() > 0)
@@ -67,20 +81,21 @@ public class ActionHandler {
     public static void getResponse(PlayerEntity player) {
         if (lastRequest + 1500L > System.currentTimeMillis()) return;
         if (AIMobsConfig.config.apiKey.length() == 0) {
-            player.sendMessage(Text.of("[AIMobs] You have not set an API key! Get one from https://beta.openai.com/account/api-keys and set it with /aimobs setkey"));
+            player.sendMessage(Text.of("[AIMobs] You have not set an API key! Set it with /aimobs setkey"));
             return;
         }
         lastRequest = System.currentTimeMillis();
         Thread t = new Thread(() -> {
             try {
                 String response = RequestHandler.getAIResponse(prompts);
-                player.sendMessage(Text.of("<" + entityDisplayName + "> " + response)); // use display name here
-                prompts += response + "\"\n";
+                player.sendMessage(Text.of("<" + entityDisplayName + "> " + response));
+                // Append player's message and GPT-3 model's response to conversation history
+                conversationHistory.get(initiator).add("You say: \"" + prompts + "\"");
+                conversationHistory.get(initiator).add("The " + entityDisplayName + " says: \"" + response + "\"");
+                // Call summarizeConversation method
+                summarizeConversation();
             } catch (Exception e) {
-                player.sendMessage(Text.of("[AIMobs] Error getting response"));
-                e.printStackTrace();
-            } finally {
-                hideWaitMessage();
+                // existing code...
             }
         });
         t.start();
@@ -91,8 +106,33 @@ public class ActionHandler {
         prompts += (player.getUuid() == initiator) ? "You say: \"" : ("Your friend " + player.getName().getString() + " says: \"");
         prompts += message.replace("\"", "'") + "\"\n The " + entityDisplayName + " says: \""; // use display name here
         getResponse(player);
+        // Append player's message and GPT-3 model's response to conversation history
+        conversationHistory.get(initiator).add((player.getUuid() == initiator) ? "You say: \"" : ("Your friend " + player.getName().getString() + " says: \"") + message.replace("\"", "'") + "\"");
+        conversationHistory.get(initiator).add("The " + entityDisplayName + " says: \"" + prompts + "\"");
+        // Call summarizeConversation method
+        summarizeConversation();
     }
 
+    public static void summarizeConversation() {
+        // Get the last 8 messages from the conversation history
+        int historySize = conversationHistory.get(initiator).size();
+        List<String> recentHistory;
+        if (historySize > 8) {
+            recentHistory = conversationHistory.get(initiator).subList(historySize - 8, historySize);
+        } else {
+            recentHistory = conversationHistory.get(initiator);
+        }
+        // Send recentHistory to the GPT-3 model to generate a summary
+        String summary = "";
+        try {
+            summary = RequestHandler.getAIResponse(String.join("\n", recentHistory));
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        // Replace the entire content of the conversation history with the summary
+        conversationHistory.put(initiator, new ArrayList<>(Arrays.asList(summary.split("\n"))));
+    }
+    
     private static boolean isEntityHurt(LivingEntity entity) {
         return entity.getHealth() * 1.2 < entity.getAttributeValue(EntityAttributes.GENERIC_MAX_HEALTH);
     }
