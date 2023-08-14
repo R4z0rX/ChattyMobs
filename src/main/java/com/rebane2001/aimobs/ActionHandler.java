@@ -71,8 +71,8 @@ public class ActionHandler {
         prompts = createPrompt(entity, player);
         ItemStack heldItem = player.getMainHandStack();
         if (heldItem.getCount() > 0)
-            prompts = "You are holding a " + heldItem.getName().getString() + " in your hand. " + prompts;
-        showWaitMessage(entityDisplayName); // use display name here
+            prompts = "Estás sosteniendo un objeto cuyo nombre en inglés es " + heldItem.getName().getString() + " en tu mano. " + prompts;
+        showWaitMessage(entityName);
         getResponse(player);
     }
     
@@ -102,8 +102,8 @@ public class ActionHandler {
 
     public static void replyToEntity(String message, PlayerEntity player) {
         if (entityId == 0) return;
-        prompts += (player.getUuid() == initiator) ? "You say: \"" : ("Your friend " + player.getName().getString() + " says: \"");
-        prompts += message.replace("\"", "'") + "\"\n The " + entityDisplayName + " says: \""; // use display name here
+        prompts += (player.getUuid() == initiator) ? "Tú dices: \"" : ("Tu amigo " + player.getName().getString() + " dice: \"");
+        prompts += message.replace("\"", "'") + "\"\n La entidad de nombre en inglés " + entityName + " dice: \"";
         getResponse(player);
         // Append player's message and GPT-3 model's response to conversation history
         conversationHistory.get(initiator).add((player.getUuid() == initiator) ? "You say: \"" : ("Your friend " + player.getName().getString() + " says: \"") + message.replace("\"", "'") + "\"");
@@ -142,22 +142,22 @@ public class ActionHandler {
         entityDisplayName = entityBaseName; // initially set display name to be the base name
         String villageName = villager.getVillagerData().getType().toString().toLowerCase(Locale.ROOT) + " village";
         int rep = villager.getReputation(player);
-        if (rep < -5) villageName = villageName + " that sees you as horrible";
-        if (rep > 5) villageName = villageName + " that sees you as reputable";
+        if (rep < -5) villageName = villageName + " que te ve como horrible";
+        if (rep > 5) villageName = villageName + " que te ve como confiable";
         if (villager.isBaby()) {
             entityBaseName = "Villager Kid";
             entityDisplayName = entityBaseName; // set display name to be the new base name
-            return String.format("You see a kid in a %s. The kid shouts: \"", villageName);
+            return String.format("Ves a un niño en un pueblo de tipo %s. El niño grita: \"", villageName);
         }
         String profession = StringUtils.capitalize(villager.getVillagerData().getProfession().toString().toLowerCase(Locale.ROOT).replace("none", "freelancer"));
         entityBaseName = profession; // overwrite base name with the profession
         entityDisplayName = entityBaseName; // set display name to be the new base name
-        if (villager.getVillagerData().getLevel() >= 3) entityDisplayName = "skilled " + entityDisplayName; // modify display name
-        if (isHurt) entityDisplayName = "hurt " + entityDisplayName; // modify display name
+        if (villager.getVillagerData().getLevel() >= 3) entityDisplayName = "habilidoso " + entityDisplayName; // modify display name
+        if (isHurt) entityDisplayName = "herido " + entityDisplayName; // modify display name
         Text customName = villager.getCustomName();
         if (customName != null)
             entityDisplayName = entityDisplayName + " called " + customName.getString(); // modify display name
-        return String.format("You meet a %s in a %s. It talks to you and says directly to you: \"", entityDisplayName, villageName);
+        return String.format("Te encuentras con un aldeano de profesión (en inglés) %s en un pueblo de tipo %s. El aldeano te dice: \"", entityDisplayName, villageName);
     }
 
     public static String createPromptLiving(LivingEntity entity) {
@@ -167,9 +167,9 @@ public class ActionHandler {
         entityDisplayName = entityBaseName; // initially set display name to be the base name
         Text customName = entity.getCustomName();
         if (customName != null)
-            entityDisplayName = StringUtils.capitalize(entityBaseName) + " called " + customName.getString();  // modify display name
-        if (isHurt) entityDisplayName = "hurt " + entityDisplayName; // modify display name
-        return String.format("You meet a talking %s in the %s. The %s says to you: \"", entityDisplayName, getBiome(entity), entityBaseName);  // use base name here to keep the entity type in the conversation
+            entityDisplayName = StringUtils.capitalize(entityBaseName) + " llamado " + customName.getString();  // modify display name
+        if (isHurt) entityDisplayName = "herida " + entityDisplayName; // modify display name
+        return String.format("Te encuentras con una entidad cuyo nombre en inglés es %s en un bioma de tipo %s. La entidad %s te dice: \"", entityDisplayName, getBiome(entity), entityBaseName);  // use base name here to keep the entity type in the conversation
     }
     
     public static String createPrompt(Entity entity, PlayerEntity player) {
@@ -177,12 +177,14 @@ public class ActionHandler {
         if (entity instanceof LivingEntity entityLiving) return createPromptLiving(entityLiving);
         entityBaseName = entity.getName().getString();
         entityDisplayName = entityBaseName; // initially set display name to be the base name
-        return "You see a " + entityDisplayName + ". The " + entityBaseName + " says: \"";
+        return "Ves a una entidad cuyo nombre en inglés es " + entityDisplayName + ". La entidad " + entityBaseName + " dice: \"";
     }
 
     public static void handlePunch(Entity entity, Entity player) {
         if (entity.getId() != entityId) return;
-        prompts += "Suddenly, " + player.getName().getString() + " punches the " + entityDisplayName + ". The " + entityBaseName + " screams out in pain: \"";
+        //prompts += ((player.getUuid() == initiator) ? "Golpeas" : (player.getName().getString() + " golpea")) + " a la entidad de nombre en inglés " + entityName + ".\n";
+        //prompts += "Suddenly, " + player.getName().getString() + " punches the " + entityDisplayName + ". The " + entityBaseName + " screams out in pain: \"";
+      prompts += "De pronto, " + player.getName().getString() + " golpea a la entidad de nombre en inglés " + entityDisplayName + ", y grita de dolor: \"";
         getResponse((PlayerEntity) player);
     }
 }
