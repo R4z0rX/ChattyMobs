@@ -51,7 +51,14 @@ public class RequestHandler {
             HttpResponse response = httpClient.execute(request);
             HttpEntity entity = response.getEntity();
             String responseString = EntityUtils.toString(entity, "UTF-8");
-            return new Gson().fromJson(responseString, OpenAIResponse.class).choices[0].text.replace("\n", " ");
+            AIMobsMod.LOGGER.debug("ChatGPT response: " + responseString);
+            String res = new Gson().fromJson(responseString, OpenAIResponse.class).choices[0].text.replace("\n", " ");
+            AIMobsMod.LOGGER.debug("ChatGPT response (GSON): " + res);
+            return res;
+        }
+        catch (Exception e) {
+            AIMobsMod.LOGGER.error(e.toString());
+            return "";
         }
     }
 }
