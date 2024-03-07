@@ -1,33 +1,33 @@
 {
   "schemaVersion": 1,
-  "id": "aimobs",
+  "id": "chattymobs",
   "version": "${version}",
 
-  "name": "AIMobs",
-  "description": "Chat with Minecraft mobs and entities by using the OpenAI API",
+  "name": "ChattyMobs",
+  "description": "Chat with Minecraft mobs and entities by using AI",
   "authors": [
-    "rebane2001"
-  ],
-  "contributors": [
-    "Eianex",
     "RazrCraft"
   ],
+  "contributors": [
+    "rebane2001",
+    "Eianex"
+  ],
   "contact": {
-    "homepage": "https://github.com/rebane2001/aimobs",
-    "sources": "https://github.com/rebane2001/aimobs"
+    "homepage": "https://github.com/R4z0rX/chattymobs",
+    "sources": "https://github.com/R4z0rX/chattymobs"
   },
 
   "license": "LGPL-3.0",
-  "icon": "assets/aimobs/icon.png",
+  "icon": "assets/chattymobs/icon.png",
 
   "environment": "client",
   "entrypoints": {
     "client": [
-      "com.rebane2001.aimobs.AIMobsMod"
+      "dev.razrcraft.chattymobs.ChattyMobsMod"
     ]
   },
   "mixins": [
-    "aimobs.mixins.json"
+    "chattymobs.mixins.json"
   ],
 
   "depends": {

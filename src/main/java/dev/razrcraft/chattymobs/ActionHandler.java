@@ -1,6 +1,6 @@
-package com.rebane2001.aimobs;
+package dev.razrcraft.chattymobs;
 
-import com.rebane2001.aimobs.mixin.ChatHudAccessor;
+import dev.razrcraft.chattymobs.mixin.ChatHudAccessor;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.gui.hud.ChatHudLine;
 import net.minecraft.client.resource.language.I18n;
@@ -79,8 +79,8 @@ public class ActionHandler {
 
     public static void getResponse(PlayerEntity player) {
         if (lastRequest + 1500L > System.currentTimeMillis()) return;
-        if (AIMobsConfig.config.apiKey.length() == 0) {
-            player.sendMessage(Text.of("[AIMobs] You have not set an API key! Set it with /aimobs setkey"));
+        if (ChattyMobsConfig.config.apiKey.length() == 0) {
+            player.sendMessage(Text.of("[ChattyMobs] You have not set an API key! Set it with /chattymobs setkey"));
             return;
         }
         lastRequest = System.currentTimeMillis();

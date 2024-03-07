@@ -1,4 +1,4 @@
-package com.rebane2001.aimobs;
+package dev.razrcraft.chattymobs;
 
 import com.google.gson.Gson;
 import org.apache.http.HttpEntity;
@@ -37,27 +37,27 @@ public class RequestHandler {
 
     public static String getAIResponse(String prompt) throws IOException {
         if (prompt.length() > 4096) prompt = prompt.substring(prompt.length() - 4096);
-        AIMobsMod.LOGGER.info("Prompt: " + prompt);
+        ChattyMobsMod.LOGGER.info("Prompt: " + prompt);
 
-        OpenAIRequest openAIRequest = new OpenAIRequest(prompt, AIMobsConfig.config.model, AIMobsConfig.config.temperature);
+        OpenAIRequest openAIRequest = new OpenAIRequest(prompt, ChattyMobsConfig.config.model, ChattyMobsConfig.config.temperature);
         String data = new Gson().toJson(openAIRequest);
 
         try (CloseableHttpClient httpClient = HttpClientBuilder.create().build()) {
             HttpPost request = new HttpPost("https://api.openai.com/v1/completions");
             StringEntity params = new StringEntity(data, "UTF-8");
             request.addHeader("Content-Type", "application/json");
-            request.addHeader("Authorization", "Bearer " + AIMobsConfig.config.apiKey);
+            request.addHeader("Authorization", "Bearer " + ChattyMobsConfig.config.apiKey);
             request.setEntity(params);
             HttpResponse response = httpClient.execute(request);
             HttpEntity entity = response.getEntity();
             String responseString = EntityUtils.toString(entity, "UTF-8");
-            AIMobsMod.LOGGER.debug("ChatGPT response: " + responseString);
+            ChattyMobsMod.LOGGER.debug("ChatGPT response: " + responseString);
             String res = new Gson().fromJson(responseString, OpenAIResponse.class).choices[0].text.replace("\n", " ");
-            AIMobsMod.LOGGER.debug("ChatGPT response (GSON): " + res);
+            ChattyMobsMod.LOGGER.debug("ChatGPT response (GSON): " + res);
             return res;
         }
         catch (Exception e) {
-            AIMobsMod.LOGGER.error(e.toString());
+            ChattyMobsMod.LOGGER.error(e.toString());
             return "";
         }
     }

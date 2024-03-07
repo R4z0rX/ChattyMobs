@@ -1,4 +1,4 @@
-package com.rebane2001.aimobs;
+package dev.razrcraft.chattymobs;
 
 import com.google.gson.Gson;
 import net.fabricmc.loader.api.FabricLoader;
@@ -8,7 +8,7 @@ import java.io.FileWriter;
 import java.nio.file.Path;
 import java.util.Objects;
 
-public class AIMobsConfig {
+public class ChattyMobsConfig {
     public static class Config {
         public boolean enabled = true;
         public String apiKey = "";
@@ -18,7 +18,7 @@ public class AIMobsConfig {
     public static Config config;
 
     private static Path getConfigPath() {
-        return FabricLoader.getInstance().getConfigDir().resolve("aimobs.json");
+        return FabricLoader.getInstance().getConfigDir().resolve("chattymobs.json");
     }
 
     public static void loadConfig() {
