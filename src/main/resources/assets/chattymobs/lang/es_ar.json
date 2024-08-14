@@ -1,0 +1,17 @@
+{
+  "chattymobs.set_api_key": "No configuraste la clave API! Configurala con ",
+  "chattymobs.held_item": "Estás sosteniendo en tu mano un objeto cuyo nombre es %s.",
+  "chattymobs.village_name": "Aldea %s",
+  "chattymobs.bad_reputation": " que te ve como horrible",
+  "chattymobs.good_reputation": " que te ve como confiable",
+  "chattymobs.villager_kid": "Niño aldeano",
+  "chattymobs.kid_say_village_name": "Ves a un niño en una %s. El niño grita: \"",
+  "chattymobs.freelancer": "Freelancer",
+  "chattymobs.hurt": " herido ",
+  "chattymobs.hurt2": " herida ",
+  "chattymobs.called": " llamado ",
+  "chattymobs.meet_villager": "Te encuentras con un %s en la %s. El aldeano te dice: \"",
+  "chattymobs.meet_living_entity": "Te encuentras con una entidad de tipo %s en un bioma de tipo %s. La entidad %s te dice: \"",
+  "chattymobs.meet_entity": "You see a %s. The %s says: \"",
+  "chattymobs.place": "lugar"
+}

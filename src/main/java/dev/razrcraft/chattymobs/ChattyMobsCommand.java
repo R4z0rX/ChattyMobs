@@ -43,7 +43,7 @@ public class ChattyMobsCommand {
     }
 
     public static int status(CommandContext<FabricClientCommandSource> context) {
-        boolean hasKey = ChattyMobsConfig.config.apiKey.length() > 0;
+        boolean hasKey = !ChattyMobsConfig.config.apiKey.isEmpty();
         Text yes = Text.literal("Yes").formatted(Formatting.GREEN);
         Text no = Text.literal("No").formatted(Formatting.RED);
         Text helpText = Text.literal("")
@@ -74,7 +74,7 @@ public class ChattyMobsCommand {
     }
     public static int setAPIKey(CommandContext<FabricClientCommandSource> context) {
         String apiKey = context.getArgument("key", String.class);
-        if (apiKey.length() > 0) {
+        if (!apiKey.isEmpty()) {
             ChattyMobsConfig.config.apiKey = apiKey;
             ChattyMobsConfig.saveConfig();
             context.getSource().sendFeedback(Text.of("API key set"));
@@ -84,7 +84,7 @@ public class ChattyMobsCommand {
     }
     public static int setModel(CommandContext<FabricClientCommandSource> context) {
         String model = context.getArgument("model", String.class);
-        if (model.length() > 0) {
+        if (!model.isEmpty()) {
             ChattyMobsConfig.config.model = model;
             ChattyMobsConfig.saveConfig();
             context.getSource().sendFeedback(Text.of("Model set"));

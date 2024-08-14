@@ -6,6 +6,7 @@ import net.fabricmc.loader.api.FabricLoader;
 import java.io.FileReader;
 import java.io.FileWriter;
 import java.nio.file.Path;
+import java.util.Arrays;
 import java.util.Objects;
 
 public class ChattyMobsConfig {
@@ -34,7 +35,8 @@ public class ChattyMobsConfig {
         try (FileWriter writer = new FileWriter(getConfigPath().toFile())) {
             new Gson().toJson(config, writer);
         } catch (Exception e) {
-            e.printStackTrace();
+            //e.printStackTrace();
+            ChattyMobsMod.LOGGER.error(Arrays.toString(e.getStackTrace()));
         }
     }
 }

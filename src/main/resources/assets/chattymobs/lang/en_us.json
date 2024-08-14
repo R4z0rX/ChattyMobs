@@ -1,0 +1,17 @@
+{
+  "chattymobs.set_api_key": "You have not set an API key! Set it with",
+  "chattymobs.held_item": "You are holding a %s in your hand.",
+  "chattymobs.village_name": "%s Village",
+  "chattymobs.bad_reputation": " that sees you as horrible",
+  "chattymobs.good_reputation": " that sees you as reputable",
+  "chattymobs.villager_kid": "Villager Kid",
+  "chattymobs.kid_say_village_name": "You see a kid in a %s. The kid shouts: \"",
+  "chattymobs.freelancer": "Freelancer",
+  "chattymobs.hurt": " hurt ",
+  "chattymobs.hurt2": " hurt ",
+  "chattymobs.called": " called ",
+  "chattymobs.meet_villager": "You meet a %s in the %s. He says to you: \"",
+  "chattymobs.meet_living_entity": "You meet a talking %s in the %s. The %s says to you: \"",
+  "chattymobs.meet_entity": "You see a %s. The %s says: \"",
+  "chattymobs.place": "place"
+}

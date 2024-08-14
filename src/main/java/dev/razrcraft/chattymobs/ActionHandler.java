@@ -48,14 +48,14 @@ public class ActionHandler {
         waitMessage = new ChatHudLine.Visible(MinecraftClient.getInstance().inGameHud.getTicks(), OrderedText.concat(OrderedText.styledForwardsVisitedString("<" + name + "> ", Style.EMPTY),OrderedText.styledForwardsVisitedString("...", Style.EMPTY.withColor(Formatting.GRAY))), null, true);
         getChatHudMessages().add(0, waitMessage);
     }
-    private static void hideWaitMessage() {
+/*    private static void hideWaitMessage() {
         if (waitMessage != null) getChatHudMessages().remove(waitMessage);
         waitMessage = null;
-    }
+    }*/
 
     private static String getBiome(Entity entity) {
         Optional<RegistryKey<Biome>> biomeKey = entity.getEntityWorld().getBiomeAccess().getBiome(entity.getBlockPos()).getKey();
-        if (biomeKey.isEmpty()) return "place";
+        if (biomeKey.isEmpty()) return String.valueOf(Text.translatable("chattymobs.place"));
         return I18n.translate(Util.createTranslationKey("biome", biomeKey.get().getValue()));
     }
 
@@ -71,7 +71,8 @@ public class ActionHandler {
         prompts = createPrompt(entity, player);
         ItemStack heldItem = player.getMainHandStack();
         if (heldItem.getCount() > 0)
-            prompts = "Estás sosteniendo un objeto cuyo nombre en inglés es " + heldItem.getName().getString() + " en tu mano. " + prompts;
+            //prompts = "Estás sosteniendo un objeto cuyo nombre en inglés es " + heldItem.getName().getString() + " en tu mano. " + prompts;
+            prompts = String.valueOf(Text.translatable("chattymobs.held_item", Text.translatable(heldItem.getItem().getTranslationKey())).append(" " + prompts));
         showWaitMessage(entityName);
         getResponse(player);
     }
@@ -79,8 +80,8 @@ public class ActionHandler {
 
     public static void getResponse(PlayerEntity player) {
         if (lastRequest + 1500L > System.currentTimeMillis()) return;
-        if (ChattyMobsConfig.config.apiKey.length() == 0) {
-            player.sendMessage(Text.of("[ChattyMobs] You have not set an API key! Set it with /chattymobs setkey"));
+        if (ChattyMobsConfig.config.apiKey.isEmpty()) {
+            player.sendMessage(Text.of("[ChattyMobs] " + Text.translatable("chattymobs.set_api_key") + " /chattymobs setkey"));
             return;
         }
         lastRequest = System.currentTimeMillis();
@@ -126,7 +127,8 @@ public class ActionHandler {
         try {
             summary = RequestHandler.getAIResponse(String.join("\n", recentHistory));
         } catch (IOException e) {
-            e.printStackTrace();
+            //e.printStackTrace();
+            ChattyMobsMod.LOGGER.error(Arrays.toString(e.getStackTrace()));
         }
         // Replace the entire content of the conversation history with the summary
         conversationHistory.put(initiator, new ArrayList<>(Arrays.asList(summary.split("\n"))));
@@ -138,26 +140,34 @@ public class ActionHandler {
 
     private static String createPromptVillager(VillagerEntity villager, PlayerEntity player) {
         boolean isHurt = isEntityHurt(villager);
-        entityBaseName = "Villager";
+        entityBaseName = String.valueOf(Text.translatable("entity.minecraft.villager"));
         entityDisplayName = entityBaseName; // initially set display name to be the base name
-        String villageName = villager.getVillagerData().getType().toString().toLowerCase(Locale.ROOT) + " village";
+        //String villageName = villager.getVillagerData().getType().toString().toLowerCase(Locale.ROOT) + " village";
+        String villageName = String.valueOf(Text.translatable("chattymobs.village_name", Text.translatable("biome.minecraft." + villager.getVillagerData().getType().toString().toLowerCase(Locale.ROOT))));
         int rep = villager.getReputation(player);
-        if (rep < -5) villageName = villageName + " que te ve como horrible";
-        if (rep > 5) villageName = villageName + " que te ve como confiable";
+        if (rep < -5) villageName = villageName + Text.translatable("chattymobs.bad_reputation");
+        if (rep > 5) villageName = villageName + Text.translatable("chattymobs.good_reputation");
         if (villager.isBaby()) {
-            entityBaseName = "Villager Kid";
+            entityBaseName = String.valueOf(Text.translatable("chattymobs.villager_kid"));
             entityDisplayName = entityBaseName; // set display name to be the new base name
-            return String.format("Ves a un niño en un pueblo de tipo %s. El niño grita: \"", villageName);
+            //return String.format("Ves a un niño en un pueblo de tipo %s. El niño grita: \"", villageName);
+            return String.valueOf(Text.translatable("chattymobs.kid_say_village_name", villageName));
         }
-        String profession = StringUtils.capitalize(villager.getVillagerData().getProfession().toString().toLowerCase(Locale.ROOT).replace("none", "freelancer"));
-        entityBaseName = profession; // overwrite base name with the profession
+        String profession = StringUtils.capitalize(villager.getVillagerData().getProfession().toString().toLowerCase(Locale.ROOT)); //.replace("none", "freelancer"));
+        // overwrite base name with the profession
+        if (profession.equals("none")) {
+            entityBaseName = String.valueOf(Text.translatable("chattymobs.freelancer"));
+        } else {
+            entityBaseName = String.valueOf(Text.translatable("entity.minecraft.villager." + profession));
+        }
         entityDisplayName = entityBaseName; // set display name to be the new base name
-        if (villager.getVillagerData().getLevel() >= 3) entityDisplayName = "habilidoso " + entityDisplayName; // modify display name
-        if (isHurt) entityDisplayName = "herido " + entityDisplayName; // modify display name
+        //if (villager.getVillagerData().getLevel() >= 3) entityDisplayName = "habilidoso " + entityDisplayName; // modify display name
+        entityDisplayName = String.valueOf(Text.translatable("merchant.level." + villager.getVillagerData().getLevel()));
+        if (isHurt) entityDisplayName = Text.translatable("chattymobs.hurt") + entityDisplayName; // modify display name
         Text customName = villager.getCustomName();
         if (customName != null)
-            entityDisplayName = entityDisplayName + " called " + customName.getString(); // modify display name
-        return String.format("Te encuentras con un aldeano de profesión (en inglés) %s en un pueblo de tipo %s. El aldeano te dice: \"", entityDisplayName, villageName);
+            entityDisplayName = entityDisplayName + Text.translatable("chattymobs.called") + customName.getString(); // modify display name
+        return String.valueOf(Text.translatable("chattymobs.meet_villager", entityDisplayName, villageName));
     }
 
     public static String createPromptLiving(LivingEntity entity) {
@@ -168,23 +178,22 @@ public class ActionHandler {
         Text customName = entity.getCustomName();
         if (customName != null)
             entityDisplayName = StringUtils.capitalize(entityBaseName) + " llamado " + customName.getString();  // modify display name
-        if (isHurt) entityDisplayName = "herida " + entityDisplayName; // modify display name
-        return String.format("Te encuentras con una entidad cuyo nombre en inglés es %s en un bioma de tipo %s. La entidad %s te dice: \"", entityDisplayName, getBiome(entity), entityBaseName);  // use base name here to keep the entity type in the conversation
+        if (isHurt) entityDisplayName = Text.translatable("chattymobs.hurt2") + entityDisplayName; // modify display name
+        return String.valueOf(Text.translatable("chattymobs.meet_living_entity", entityDisplayName, getBiome(entity), entityBaseName));  // use base name here to keep the entity type in the conversation
     }
     
     public static String createPrompt(Entity entity, PlayerEntity player) {
         if (entity instanceof VillagerEntity villager) return createPromptVillager(villager, player);
         if (entity instanceof LivingEntity entityLiving) return createPromptLiving(entityLiving);
-        entityBaseName = entity.getName().getString();
-        entityDisplayName = entityBaseName; // initially set display name to be the base name
-        return "Ves a una entidad cuyo nombre en inglés es " + entityDisplayName + ". La entidad " + entityBaseName + " dice: \"";
+        entityDisplayName = entity.getName().getString();
+        return String.valueOf(Text.translatable("chattymobs.meet_entity", entityDisplayName, entityDisplayName));
     }
 
     public static void handlePunch(Entity entity, Entity player) {
         if (entity.getId() != entityId) return;
-        //prompts += ((player.getUuid() == initiator) ? "Golpeas" : (player.getName().getString() + " golpea")) + " a la entidad de nombre en inglés " + entityName + ".\n";
+        prompts += ((player.getUuid() == initiator) ? "Golpeas" : (player.getName().getString() + " golpea")) + " a la entidad de nombre en inglés " + entityName + ".\n";
         //prompts += "Suddenly, " + player.getName().getString() + " punches the " + entityDisplayName + ". The " + entityBaseName + " screams out in pain: \"";
-      prompts += "De pronto, " + player.getName().getString() + " golpea a la entidad de nombre en inglés " + entityDisplayName + ", y grita de dolor: \"";
+        //prompts += "De pronto, " + player.getName().getString() + " golpea a la entidad de nombre en inglés " + entityDisplayName + ", y grita de dolor: \"";
         getResponse((PlayerEntity) player);
     }
 }
